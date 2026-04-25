@@ -383,16 +383,17 @@ export default function FrictionalPdfMode() {
               return null;
             })}
 
-            {/* Illusion Breaker Summary (Always visible at the bottom of the list when not locked) */}
-            {!isLocked && (
-              <div className="space-y-8 animate-fade-in pt-8 border-t border-white/5">
-                <div className="text-center py-4">
-                  <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center text-xl mx-auto mb-4 text-emerald-500 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)]">🧠</div>
-                  <h3 className="text-sm font-black uppercase tracking-widest italic text-emerald-500">Sync Complete</h3>
-                </div>
+            {/* Illusion Breaker Summary (Always visible at the bottom of the list) */}
+            <div className="space-y-8 animate-fade-in pt-8 border-t border-white/5 pb-20">
+              <div className="text-center py-4">
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center text-xl mx-auto mb-4 text-emerald-500 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)]">🧠</div>
+                <h3 className="text-sm font-black uppercase tracking-widest italic text-emerald-500">
+                  {isLocked ? "Neural Status" : "Sync Complete"}
+                </h3>
+              </div>
 
-                {/* Illusion Breaker: Cognitive Gap Report */}
-                <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-5 space-y-4 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+              {/* Illusion Breaker: Cognitive Gap Report */}
+              <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-5 space-y-4 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
                     <div className="text-[8px] font-black italic rotate-12">ILLUSION BREAKER</div>
                   </div>
@@ -440,7 +441,6 @@ export default function FrictionalPdfMode() {
                    </div>
                 </div>
               </div>
-            )}
           </div>
         </div>
 
