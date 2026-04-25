@@ -235,9 +235,11 @@ Page locks — user must answer before proceeding
         ↓
 AI evaluates answer → score, critique, suggestions, weak topics
         ↓
-Illusion Breaker: perceived vs actual understanding gap revealed
+Illusion Breaker: perceived vs actual understanding gap calculated
         ↓
-Answer saved to History sidebar (one-time, read-only)
+Answer and metrics stored in History archive (PDF Lockdown tab)
+        ↓
+Global integration metrics updated in sidebar footer
 ```
 
 ---
@@ -251,7 +253,7 @@ Answer saved to History sidebar (one-time, read-only)
 > The AI dismantles your reasoning. Each iteration is logged with score delta and AI critique.
 
 ### PDF Lockdown Mode
-> Pages lock mid-read. The right sidebar becomes your **Answer History** — showing each answered checkpoint with AI feedback or suggestions.
+> Pages lock mid-read. The right sidebar becomes your **Lockdown Status** dashboard — showing the active challenge and your global integration metrics. All past answers and hallucination reports are safely stored in the History archive.
 
 ### History Archive — Two Tabs
 > **Resistant AI tab**: review all past debate sessions.

@@ -246,11 +246,11 @@ export default function FrictionalPdfMode() {
         <div className="flex-none p-4 border-b border-white/5 bg-[#0a0a0a]">
           <div className="flex justify-between items-center mb-1">
              <div className="flex items-center gap-2">
-               <span className="text-purple-400 text-sm">📋</span>
-               <h2 className="text-sm font-black tracking-widest uppercase italic">Answer History</h2>
+               <span className="text-emerald-400 text-sm">🛡️</span>
+               <h2 className="text-sm font-black tracking-widest uppercase italic">Lockdown Status</h2>
              </div>
-             <div className="text-[7px] font-black px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded">
-               {session.checkpoints.filter(cp => cp.status === "passed").length} LOGGED
+             <div className="text-[7px] font-black px-2 py-0.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded animate-pulse">
+               {isLocked ? "SECURE" : "OPEN"}
              </div>
           </div>
           <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest italic opacity-50">Sector {Math.ceil(session.currentPage / 5)} · Page {session.currentPage}/{session.totalPageCount}</p>
@@ -278,74 +278,12 @@ export default function FrictionalPdfMode() {
            )}
         </div>
 
-        {/* Scrollable Core */}
-        <div 
-          ref={scrollRef}
-          style={{ overflowAnchor: 'none' }}
-          className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar bg-[#080808] scroll-smooth"
-        >
-          <div className="space-y-8 pb-32">
-            {/* History Header */}
-            {session.checkpoints.filter(cp => cp.status === "passed").length > 0 && (
-              <div className="flex items-center gap-2 pt-2">
-                <span className="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em]">Answered</span>
-                <div className="h-px flex-1 bg-white/5" />
-              </div>
-            )}
-
+        {/* Core Content */}
+        <div className="flex-1 min-h-0 p-4 bg-[#080808] flex flex-col justify-between">
+          <div className="space-y-6">
             {/* Checkpoint Feed */}
             {session.checkpoints.map((cp, idx) => {
               const isActive = cp.status === "locked" && session.currentPage >= cp.pageNumber;
-              const isPassed = cp.status === "passed";
-              const failed = (cp.score ?? 0) < 70;
-
-              if (isPassed) {
-                return (
-                  <div key={idx} className={`animate-fade-in-up space-y-3 border-l-2 pl-4 py-2 transition-all group ${
-                    failed ? "border-red-500/30" : "border-emerald-500/30"
-                  }`}>
-                    {/* Score row */}
-                    <div className="flex justify-between items-center">
-                       <span className="text-[7px] font-black text-gray-600 uppercase tracking-widest">Q{idx + 1} · pg {cp.pageNumber}</span>
-                       <span className={`text-[7px] font-black px-2 py-0.5 rounded border ${
-                         failed
-                           ? "text-red-400 bg-red-500/10 border-red-500/20"
-                           : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-                       }`}>{cp.score ?? 0}%</span>
-                    </div>
-
-                    {/* Question */}
-                    <div>
-                      <p className="text-[6px] font-black text-indigo-400 uppercase tracking-widest mb-1 opacity-60">Question</p>
-                      <p className="text-[10px] text-gray-400 font-light italic leading-relaxed">"{cp.creativeQuestion}"</p>
-                    </div>
-
-                    {/* User answer — shown once, read-only */}
-                    <div>
-                      <p className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1">Your Answer</p>
-                      <p className="text-[10px] text-gray-300 font-light bg-white/5 p-2.5 rounded-xl border border-white/5 italic leading-relaxed">"{cp.userAnswer}"</p>
-                    </div>
-
-                    {/* AI Critique / Suggestion */}
-                    {cp.aiCritique && (
-                      <div className={`rounded-xl p-3 border ${
-                        failed
-                          ? "bg-red-500/5 border-red-500/20"
-                          : "bg-indigo-500/5 border-indigo-500/10"
-                      }`}>
-                        <p className={`text-[6px] font-black uppercase tracking-widest mb-1.5 ${
-                          failed ? "text-red-400" : "text-indigo-400"
-                        }`}>
-                          {failed ? "⚠ AI Suggestion" : "✦ AI Feedback"}
-                        </p>
-                        <p className={`text-[9px] leading-relaxed font-light italic ${
-                          failed ? "text-red-200/70" : "text-gray-400"
-                        }`}>{cp.aiCritique}</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
 
               if (isActive) {
                 return (
@@ -383,64 +321,7 @@ export default function FrictionalPdfMode() {
               return null;
             })}
 
-            {/* Illusion Breaker Summary (Always visible at the bottom of the list) */}
-            <div className="space-y-8 animate-fade-in pt-8 border-t border-white/5 pb-20">
-              <div className="text-center py-4">
-                <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center text-xl mx-auto mb-4 text-emerald-500 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)]">🧠</div>
-                <h3 className="text-sm font-black uppercase tracking-widest italic text-emerald-500">
-                  {isLocked ? "Neural Status" : "Sync Complete"}
-                </h3>
-              </div>
 
-              {/* Illusion Breaker: Cognitive Gap Report */}
-              <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-5 space-y-4 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
-                  <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
-                    <div className="text-[8px] font-black italic rotate-12">ILLUSION BREAKER</div>
-                  </div>
-                  <h4 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] italic">Cognitive Gap Report</h4>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-end leading-none">
-                        <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">Perceived</span>
-                        <span className="text-xl font-black text-white italic">{session.perceivedUnderstanding}%</span>
-                    </div>
-                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500/40" style={{ width: `${session.perceivedUnderstanding}%` }}></div>
-                    </div>
-                    <div className="flex justify-between items-end leading-none">
-                        <span className="text-[7px] font-black text-red-500 uppercase tracking-widest">Actual</span>
-                        <span className="text-xl font-black text-red-500 italic">{session.actualUnderstanding}%</span>
-                    </div>
-                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden shadow-[inset_0_0_10px_rgba(239,68,68,0.2)]">
-                        <div className="h-full bg-red-500 animate-pulse" style={{ width: `${session.actualUnderstanding}%` }}></div>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-white/5 space-y-3">
-                    <div className="flex justify-between items-center text-[7px] font-black uppercase tracking-widest">
-                        <span className="text-gray-500">Overconfidence:</span>
-                        <span className={session.overconfidenceLevel > 20 ? "text-red-500 animate-bounce" : "text-emerald-500"}>
-                          {session.overconfidenceLevel > 20 ? "CRITICAL" : "STABLE"} (+{session.overconfidenceLevel}%)
-                        </span>
-                    </div>
-                    {session.weakTopics && session.weakTopics.length > 0 && (
-                      <div className="space-y-2">
-                          <p className="text-[6px] font-black text-gray-600 uppercase">Neural Blindspots:</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {session.weakTopics.slice(0, 5).map((topic, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[6px] rounded font-black italic uppercase leading-none">{topic}</span>
-                            ))}
-                          </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                   <h4 className="text-[7px] font-black text-gray-500 uppercase tracking-widest ml-1 italic text-center">Intel: Next Target</h4>
-                   <div className="p-4 bg-[#0f0f0f] rounded-xl border border-white/5 text-[10px] text-gray-500 italic line-clamp-4">
-                     "{session.checkpoints.find(cp => cp.status === "locked")?.pyq || "Analyzing next sector blueprint..."}"
-                   </div>
-                </div>
-              </div>
           </div>
         </div>
 
