@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
     if (user) refreshUser();
   }, [refreshUser]);

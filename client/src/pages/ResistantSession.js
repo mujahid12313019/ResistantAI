@@ -3,12 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getSession, submitAnswer, teachConcept } from "../services/api";
 import { showToast } from "../components/Toast";
 import FrictionHUD from "../components/FrictionHUD";
-import { useAuth } from "../context/AuthContext";
+
 
 export default function ResistantSession() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+
   
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);

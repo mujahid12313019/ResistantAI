@@ -14,7 +14,7 @@ export default function FrictionalPdfMode() {
 
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [isResizing, setIsResizing] = useState(false);
-  const [showReport, setShowReport] = useState(false);
+
 
   const readingTimeRef = React.useRef(0);
   const answeringTimeRef = React.useRef(0);
