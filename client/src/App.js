@@ -9,8 +9,6 @@ import Home from "./pages/Dashboard";
 import History from "./pages/History";
 import ResistantSession from "./pages/ResistantSession";
 import FrictionalPdfMode from "./pages/FrictionalPdfMode";
-import "./index.css";
-import "./App.css";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
