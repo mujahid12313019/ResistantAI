@@ -17,8 +17,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "tailwind:watch": "tailwindcss -i ./src/input.css -o ./src/index.css --watch",
-    "tailwind:build": "tailwindcss -i ./src/input.css -o ./src/index.css",
+    "tailwind:watch": "tailwindcss -i ./src/input.css -o ./public/tailwind-output.css --watch",
+    "tailwind:build": "tailwindcss -i ./src/input.css -o ./public/tailwind-output.css",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

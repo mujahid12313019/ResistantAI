@@ -172,7 +172,7 @@ export default function FrictionalPdfMode() {
         <div className="max-w-4xl w-full relative z-10">
           <header className="mb-16 text-center">
              <div className="inline-block px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-[9px] font-black tracking-[0.4em] text-indigo-400 uppercase mb-4">Dual-Gauntlet Protocol</div>
-            <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 uppercase italic text-center text-white">PDF <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Lockdown</span></h1>
+            <h1 className="text-4xl md:text-8xl font-black tracking-tighter mb-6 uppercase italic text-center text-white">PDF <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Lockdown</span></h1>
           </header>
           <form onSubmit={handleUpload} className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8">
@@ -239,8 +239,13 @@ export default function FrictionalPdfMode() {
 
       {/* Neural Sidecar - Re-engineered for Vertical Stability */}
       <div 
-        className="bg-[#080808] border-l border-white/5 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] relative z-[70] overflow-hidden"
-        style={{ width: `${sidebarWidth}px`, height: '100%' }}
+        className="bg-[#080808] border-l border-white/5 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] relative z-[70] overflow-hidden transition-[width] duration-300"
+        style={{ 
+          width: `${sidebarWidth}px`, 
+          minWidth: '200px',
+          maxWidth: '90vw',
+          height: '100%' 
+        }}
       >
         {/* Fixed Header */}
         <div className="flex-none p-4 border-b border-white/5 bg-[#0a0a0a]">
@@ -279,7 +284,7 @@ export default function FrictionalPdfMode() {
         </div>
 
         {/* Core Content */}
-        <div className="flex-1 min-h-0 p-4 bg-[#080808] flex flex-col justify-between">
+        <div className="flex-1 min-h-0 p-4 bg-[#080808] flex flex-col justify-between overflow-y-auto custom-scrollbar">
           <div className="space-y-6">
             {/* Checkpoint Feed */}
             {session.checkpoints.map((cp, idx) => {
