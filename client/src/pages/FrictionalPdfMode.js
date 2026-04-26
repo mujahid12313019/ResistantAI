@@ -126,7 +126,9 @@ export default function FrictionalPdfMode() {
   const currentCheckpoint = session?.checkpoints?.find(cp => cp.status === "locked");
   const isLocked = !!(session && currentCheckpoint && session.currentPage >= currentCheckpoint.pageNumber);
   
-  const BACKEND_BASE = "https://resistantaibackend1.onrender.com";
+  const BACKEND_BASE = window.location.hostname === "localhost" 
+    ? "http://localhost:5000" 
+    : "https://resistantaibackend1.onrender.com";
   const staticPdfUrl = session ? `${BACKEND_BASE}/uploads/${session.multerFileName || session.lectureFileName}#toolbar=0&navpanes=0&view=FitH` : "";
 
   const scrollRef = React.useRef(null);
@@ -206,8 +208,8 @@ export default function FrictionalPdfMode() {
 
   return (
     <div 
-      style={{ position: 'fixed', top: '64px', left: 0, right: 0, bottom: 0, width: '100vw', zIndex: 9999 }}
-      className={`bg-black text-white flex overflow-hidden ${isResizing ? 'cursor-col-resize select-none' : ''}`}
+      style={{ height: 'calc(100vh - 64px)' }}
+      className={`bg-black text-white flex overflow-hidden w-full ${isResizing ? 'cursor-col-resize select-none' : ''}`}
     >
       {/* Immersive Reader Area */}
       <div 
@@ -218,7 +220,7 @@ export default function FrictionalPdfMode() {
         
         {/* Cinematic Lock Overlay */}
         {isLocked && (
-          <div className="absolute inset-0 z-[60] bg-black/98 backdrop-blur-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+          <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center text-xl mb-4 border border-red-500/20 shadow-[0_0_50px_rgba(239,68,68,0.3)] animate-pulse text-red-500">🔒</div>
              <h2 className="text-xl font-black uppercase italic tracking-tighter mb-2 text-red-500">Locked</h2>
              <p className="text-gray-400 max-w-sm font-light leading-relaxed uppercase text-[7px] tracking-[0.2em]">Complete Sync</p>
@@ -285,9 +287,9 @@ export default function FrictionalPdfMode() {
            )}
         </div>
 
-        {/* Core Content */}
+        {/* Core Content Area */}
         <div className="flex-1 min-h-0 p-4 bg-[#080808] flex flex-col overflow-y-auto custom-scrollbar">
-          <div className="space-y-6">
+          <div className="space-y-6 pb-20">
             {/* Checkpoint Feed */}
             {session.checkpoints.map((cp, idx) => {
               const isActive = cp.status === "locked" && session.currentPage >= cp.pageNumber;
@@ -327,27 +329,6 @@ export default function FrictionalPdfMode() {
 
               return null;
             })}
-
-
-          </div>
-        </div>
-
-        {/* Fixed Global Metrics Footer */}
-        <div className="flex-none p-4 border-t border-white/5 bg-[#0a0a0a]">
-          <div className="flex justify-between items-end mb-4">
-            <div>
-              <p className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1">Integration</p>
-              <p className="text-2xl font-black font-mono tracking-tighter text-white">{session.actualUnderstanding}%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[6px] font-black text-gray-600 uppercase tracking-widest mb-1">Progress</p>
-              <p className="text-2xl font-black font-mono tracking-tighter text-indigo-500 italic">{session.currentPage} <span className="text-[8px] opacity-20">/ {session.totalPageCount}</span></p>
-            </div>
-          </div>
-          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden flex gap-1">
-             {[...Array(10)].map((_, i) => (
-               <div key={i} className={`h-full flex-1 transition-all duration-1000 ${ (i + 1) * 10 <= (session.currentPage / session.totalPageCount) * 100 ? 'bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5' }`}></div>
-             ))}
           </div>
         </div>
       </div>
