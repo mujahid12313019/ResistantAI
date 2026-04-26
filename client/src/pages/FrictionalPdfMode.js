@@ -125,7 +125,9 @@ export default function FrictionalPdfMode() {
 
   const currentCheckpoint = session?.checkpoints?.find(cp => cp.status === "locked");
   const isLocked = !!(session && currentCheckpoint && session.currentPage >= currentCheckpoint.pageNumber);
-  const staticPdfUrl = session ? `/uploads/${session.multerFileName || session.lectureFileName}#toolbar=0&navpanes=0&view=FitH` : "";
+  
+  const BACKEND_BASE = "https://resistantaibackend1.onrender.com";
+  const staticPdfUrl = session ? `${BACKEND_BASE}/uploads/${session.multerFileName || session.lectureFileName}#toolbar=0&navpanes=0&view=FitH` : "";
 
   const scrollRef = React.useRef(null);
   const activeChallengeRef = React.useRef(null);
@@ -284,7 +286,7 @@ export default function FrictionalPdfMode() {
         </div>
 
         {/* Core Content */}
-        <div className="flex-1 min-h-0 p-4 bg-[#080808] flex flex-col justify-between overflow-y-auto custom-scrollbar">
+        <div className="flex-1 min-h-0 p-4 bg-[#080808] flex flex-col overflow-y-auto custom-scrollbar">
           <div className="space-y-6">
             {/* Checkpoint Feed */}
             {session.checkpoints.map((cp, idx) => {
@@ -313,8 +315,8 @@ export default function FrictionalPdfMode() {
                       </div>
                     </div>
 
-                    <form onSubmit={handleSubmitCheckpoint} className="space-y-4">
-                      <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-4 text-[11px] text-white focus:outline-none focus:border-indigo-500/40 transition-all font-light min-h-[140px] shadow-inner" placeholder="Analyze the evolution..." disabled={isSubmitting} />
+                      <form onSubmit={handleSubmitCheckpoint} className="space-y-4">
+                        <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-4 text-[11px] text-white focus:outline-none focus:border-indigo-500/40 transition-all font-light min-h-[80px] shadow-inner" placeholder="Analyze the evolution..." disabled={isSubmitting} />
                       <button type="submit" disabled={isSubmitting || !answer.trim()} className="w-full py-5 bg-indigo-600 text-white font-black text-[9px] uppercase tracking-[0.5em] rounded-xl shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:shadow-[0_0_50px_rgba(79,70,229,0.6)] hover:bg-indigo-500 transition-all disabled:opacity-20 italic border border-indigo-400/30">
                         {isSubmitting ? "SYNCING..." : "VERIFY EVOLUTION →"}
                       </button>
