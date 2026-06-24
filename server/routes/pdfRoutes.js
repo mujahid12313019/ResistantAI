@@ -59,24 +59,68 @@ async function extractPdfTextByPage(filePath, maxPages = 200) {
     });
 }
 
+async function callGemini(systemPrompt, userPrompt) {
+  if (!process.env.GEMINI_API_KEY) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+          }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function callLLM(systemPrompt, userPrompt) {
   console.log(`[LLM REQUEST] System: ${systemPrompt.substring(0, 100)}...`);
-  try {
-    const response = await axios.post(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`, 
-      { messages: [
-          { role: "system", content: systemPrompt + " Return ONLY valid JSON. No conversational filler." }, 
-          { role: "user", content: userPrompt }
-        ] 
-      },
-      { headers: { Authorization: `Bearer ${process.env.CF_API_TOKEN}` }, timeout: 45000 }
-    );
-    const result = response.data.result.response;
-    console.log(`[LLM RESPONSE] Received ${result.length} characters.`);
-    return result;
-  } catch (e) { 
-    console.error(`[LLM ERROR] ${e.message}`);
-    throw e; 
+
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_API_TOKEN) {
+    try {
+      const response = await axios.post(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`, 
+        { messages: [
+            { role: "system", content: systemPrompt + " Return ONLY valid JSON. No conversational filler." }, 
+            { role: "user", content: userPrompt }
+          ] 
+        },
+        { headers: { Authorization: `Bearer ${process.env.CF_API_TOKEN}` }, timeout: 45000 }
+      );
+      const result = response.data?.result?.response;
+      if (result) {
+        console.log(`[LLM RESPONSE] Received ${result.length} characters.`);
+        return result;
+      }
+    } catch (e) {
+      console.error(`[LLM ERROR] ${e.message}`);
+    }
   }
+
+  const geminiResult = await callGemini(systemPrompt, userPrompt);
+  if (geminiResult) {
+    console.log(`[LLM RESPONSE] Received ${geminiResult.length} characters from Gemini.`);
+    return geminiResult;
+  }
+
+  throw new Error("No AI provider available.");
 }
 
 function extractJSON(str) {

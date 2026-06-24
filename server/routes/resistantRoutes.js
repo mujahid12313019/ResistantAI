@@ -23,35 +23,68 @@ function buildFallbackEvaluation(answer, confidence = "medium") {
   const confidenceAdjust = confidence === "high" ? -1 : confidence === "low" ? 1 : 0;
   const qualityScore = Math.min(10, Math.max(2, baseScore + confidenceAdjust));
   const critique = confidence === "high"
-    ? "The AI critique service is currently unavailable, so this response is being evaluated heuristically. Consider whether your confidence is stronger than your evidence."
+    ? "The AI critique service is temporarily unavailable, so this answer is being evaluated heuristically. You may be overconfident, and your explanation would benefit from stronger evidence."
     : confidence === "low"
-      ? "The AI critique service is currently unavailable, so this response is being evaluated heuristically. Your cautious tone is acceptable, but try to strengthen the explanation."
-      : "The AI critique service is currently unavailable, so this response is being evaluated heuristically. Try to make the reasoning more precise and concrete.";
+      ? "The AI critique service is temporarily unavailable, so this answer is being evaluated heuristically. Your caution is understandable, but the reasoning still needs more depth and precision."
+      : "The AI critique service is temporarily unavailable, so this answer is being evaluated heuristically. Strengthen the explanation with clearer logic and more concrete support.";
   return { critique, qualityScore };
 }
 
-async function callLLM(systemPrompt, userPrompt, CF_ACCOUNT_ID, CF_API_TOKEN) {
-  if (!CF_ACCOUNT_ID || !CF_API_TOKEN) {
+async function callGemini(systemPrompt, userPrompt) {
+  if (!process.env.GEMINI_API_KEY) {
     return null;
   }
 
   try {
-    const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${CF_API_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }] }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+          }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      }
+    );
 
     if (!response.ok) {
       return null;
     }
 
     const data = await response.json();
-    return data?.result?.response ?? null;
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
   } catch (e) {
     return null;
   }
+}
+
+async function callLLM(systemPrompt, userPrompt, CF_ACCOUNT_ID, CF_API_TOKEN) {
+  if (CF_ACCOUNT_ID && CF_API_TOKEN) {
+    try {
+      const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${CF_API_TOKEN}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }] }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.result?.response;
+        if (text) {
+          return text;
+        }
+      }
+    } catch (e) {
+      // fall through to Gemini
+    }
+  }
+
+  return callGemini(systemPrompt, userPrompt);
 }
 
 // POST /api/resistant/start
