@@ -23,10 +23,10 @@ function buildFallbackEvaluation(answer, confidence = "medium") {
   const confidenceAdjust = confidence === "high" ? -1 : confidence === "low" ? 1 : 0;
   const qualityScore = Math.min(10, Math.max(2, baseScore + confidenceAdjust));
   const critique = confidence === "high"
-    ? "The AI critique service is temporarily unavailable, so this answer is being evaluated heuristically. You may be overconfident, and your explanation would benefit from stronger evidence."
+    ? "Your answer is still too confident for the strength of the reasoning. You need sharper evidence and a clearer explanation of the underlying mechanism."
     : confidence === "low"
-      ? "The AI critique service is temporarily unavailable, so this answer is being evaluated heuristically. Your caution is understandable, but the reasoning still needs more depth and precision."
-      : "The AI critique service is temporarily unavailable, so this answer is being evaluated heuristically. Strengthen the explanation with clearer logic and more concrete support.";
+      ? "Your caution is understandable, but the explanation remains too shallow. You need more precise reasoning and stronger conceptual support."
+      : "The answer is directionally reasonable, but it lacks depth. Make the logic tighter and ground it in more concrete evidence.";
   return { critique, qualityScore };
 }
 
