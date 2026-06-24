@@ -20,6 +20,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 connectDB();
 
+app.get("/health", (req, res) => {
+  res.json({ ok: true, timestamp: new Date().toISOString() });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/generate", generateRoutes);
 app.use("/api/resistant", resistantRoutes);
