@@ -16,7 +16,25 @@ function extractJSON(str) {
   } catch (e) { return null; }
 }
 
+function buildFallbackEvaluation(answer, confidence = "medium") {
+  const trimmed = (answer || "").trim();
+  const length = trimmed.length;
+  const baseScore = length > 80 ? 7 : length > 30 ? 5 : 3;
+  const confidenceAdjust = confidence === "high" ? -1 : confidence === "low" ? 1 : 0;
+  const qualityScore = Math.min(10, Math.max(2, baseScore + confidenceAdjust));
+  const critique = confidence === "high"
+    ? "The AI critique service is currently unavailable, so this response is being evaluated heuristically. Consider whether your confidence is stronger than your evidence."
+    : confidence === "low"
+      ? "The AI critique service is currently unavailable, so this response is being evaluated heuristically. Your cautious tone is acceptable, but try to strengthen the explanation."
+      : "The AI critique service is currently unavailable, so this response is being evaluated heuristically. Try to make the reasoning more precise and concrete.";
+  return { critique, qualityScore };
+}
+
 async function callLLM(systemPrompt, userPrompt, CF_ACCOUNT_ID, CF_API_TOKEN) {
+  if (!CF_ACCOUNT_ID || !CF_API_TOKEN) {
+    return null;
+  }
+
   try {
     const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3-8b-instruct`;
     const response = await fetch(url, {
@@ -24,9 +42,16 @@ async function callLLM(systemPrompt, userPrompt, CF_ACCOUNT_ID, CF_API_TOKEN) {
       headers: { Authorization: `Bearer ${CF_API_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify({ messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }] }),
     });
+
+    if (!response.ok) {
+      return null;
+    }
+
     const data = await response.json();
-    return data.result.response;
-  } catch (e) { throw e; }
+    return data?.result?.response ?? null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // POST /api/resistant/start
@@ -48,7 +73,7 @@ router.post("/start", authMiddleware, async (req, res) => {
         if (imgJson?.result?.image) imageData = `data:image/png;base64,${imgJson.result.image}`;
       }
     } catch (e) {}
-    const finalExplanation = await callLLM("Expert encyclopedia. Clear 2-paragraph explanation.", `Explain ${topic}`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN);
+    const finalExplanation = (await callLLM("Expert encyclopedia. Clear 2-paragraph explanation.", `Explain ${topic}`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN)) || `A concise explanation for "${topic.trim()}" will appear here once the AI service is reachable.`;
     const session = new Session({ userId: req.user.id, topic: topic.trim(), mode: mode || "Strict Teacher", imageUrl: imageData, finalExplanation });
     await session.save();
     return res.json({ session });
@@ -69,7 +94,7 @@ router.post("/submit", authMiddleware, async (req, res) => {
 
     const systemPrompt = `Topic: ${session.topic}. Persona: ${session.mode}. Difficulty: ${session.difficultyLevel}/5. Respond ONLY with JSON: {"critique": "string", "qualityScore": number}`;
     const responseStr = await callLLM(systemPrompt, `User Answer: "${answer}"`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN);
-    let result = extractJSON(responseStr) || { critique: responseStr, qualityScore: 5 };
+    let result = extractJSON(responseStr) || buildFallbackEvaluation(answer, confidence);
 
     let finalDelta = (result.qualityScore * 3);
     if (confidence === "high" && result.qualityScore < 5) finalDelta -= 30;
@@ -80,15 +105,21 @@ router.post("/submit", authMiddleware, async (req, res) => {
     session.lastActivityAt = new Date();
     session.iterations.push({ userAnswer: answer, confidence, aiCritique: result.critique, frictionScoreDelta: finalDelta });
     await session.save();
-    
+
     const user = await User.findById(req.user.id);
-    if (new Date(user.lastCapacityReset).toDateString() !== new Date().toDateString()) {
+    if (user) {
+      if (new Date(user.lastCapacityReset).toDateString() !== new Date().toDateString()) {
         user.dailyCognitiveUsage = capacityUsage;
         user.lastCapacityReset = new Date();
-    } else { user.dailyCognitiveUsage += capacityUsage; }
-    user.globalFrictionScore += finalDelta;
-    await user.save();
-    return res.json({ session, dailyCognitiveUsage: user.dailyCognitiveUsage });
+      } else {
+        user.dailyCognitiveUsage += capacityUsage;
+      }
+      user.globalFrictionScore += finalDelta;
+      await user.save();
+      return res.json({ session, dailyCognitiveUsage: user.dailyCognitiveUsage });
+    }
+
+    return res.json({ session, dailyCognitiveUsage: Math.round(capacityUsage) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -109,7 +140,11 @@ router.post("/teach", authMiddleware, async (req, res) => {
       ${leniencyPrompt}
     `;
     const resultStr = await callLLM(systemPrompt, `User Explanation: ${explanation}`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN);
-    let result = extractJSON(resultStr) || { unlocked: false, feedback: "Keep refining.", quality: 1 };
+    let result = extractJSON(resultStr) || {
+      unlocked: explanation.length > 80,
+      feedback: "The AI service was unavailable, so this was evaluated with a local fallback. Add more detail to improve clarity.",
+      quality: explanation.length > 120 ? 6 : 3,
+    };
 
     if (!result.unlocked) {
       session.teachAttempts += 1;
