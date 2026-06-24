@@ -22,11 +22,13 @@ function buildFallbackEvaluation(answer, confidence = "medium") {
   const baseScore = length > 80 ? 7 : length > 30 ? 5 : 3;
   const confidenceAdjust = confidence === "high" ? -1 : confidence === "low" ? 1 : 0;
   const qualityScore = Math.min(10, Math.max(2, baseScore + confidenceAdjust));
+
   const critique = confidence === "high"
-    ? "Your answer is still too confident for the strength of the reasoning. You need sharper evidence and a clearer explanation of the underlying mechanism."
+    ? `Your answer is too confident for the strength of the reasoning. You should narrow the claim, add a concrete example, and explain how the idea works step by step.`
     : confidence === "low"
-      ? "Your caution is understandable, but the explanation remains too shallow. You need more precise reasoning and stronger conceptual support."
-      : "The answer is directionally reasonable, but it lacks depth. Make the logic tighter and ground it in more concrete evidence.";
+      ? `Your caution is understandable, but the explanation is still too vague. Make the reasoning more specific and support it with a concrete example or mechanism.`
+      : `The answer is directionally reasonable, but it is still too general. Tighten the logic, explain the mechanism clearly, and support it with a concrete example.`;
+
   return { critique, qualityScore };
 }
 
@@ -44,7 +46,7 @@ async function callGemini(systemPrompt, userPrompt) {
         body: JSON.stringify({
           contents: [{
             role: "user",
-            parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+            parts: [{ text: `${systemPrompt}\n\n${userPrompt}\n\nReturn ONLY a compact JSON object with keys critique and qualityScore.` }],
           }],
           generationConfig: { temperature: 0.2 },
         }),
@@ -56,7 +58,8 @@ async function callGemini(systemPrompt, userPrompt) {
     }
 
     const data = await response.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+    return text;
   } catch (e) {
     return null;
   }
@@ -125,7 +128,7 @@ router.post("/submit", authMiddleware, async (req, res) => {
 
     if (timeTakenSec < 45 && session.iterations.length > 0) session.difficultyLevel = Math.min(5, session.difficultyLevel + 1);
 
-    const systemPrompt = `Topic: ${session.topic}. Persona: ${session.mode}. Difficulty: ${session.difficultyLevel}/5. Respond ONLY with JSON: {"critique": "string", "qualityScore": number}`;
+    const systemPrompt = `Topic: ${session.topic}. Persona: ${session.mode}. Difficulty: ${session.difficultyLevel}/5. Critique the user's answer as a strict tutor. Respond ONLY with JSON: {"critique": "string", "qualityScore": number}`;
     const responseStr = await callLLM(systemPrompt, `User Answer: "${answer}"`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN);
     let result = extractJSON(responseStr) || buildFallbackEvaluation(answer, confidence);
 
