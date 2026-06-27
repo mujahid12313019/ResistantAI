@@ -39,13 +39,17 @@ async function callGemini(systemPrompt, userPrompt) {
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[AI] Gemini call failed:', response.status, errorText);
       return null;
     }
 
     const data = await response.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+    console.log('[AI] Gemini raw response:', text);
     return text;
   } catch (e) {
+    console.error('[AI] Gemini exception:', e);
     return null;
   }
 }
@@ -63,11 +67,16 @@ async function callLLM(systemPrompt, userPrompt, CF_ACCOUNT_ID, CF_API_TOKEN) {
       if (response.ok) {
         const data = await response.json();
         const text = data?.result?.response;
+        console.log('[AI] Cloudflare LLM raw response:', text);
         if (text) {
           return text;
         }
+      } else {
+        const errorText = await response.text();
+        console.error('[AI] Cloudflare LLM call failed:', response.status, errorText);
       }
     } catch (e) {
+      console.error('[AI] Cloudflare LLM exception:', e);
       // fall through to Gemini
     }
   }
