@@ -117,11 +117,15 @@ router.post("/submit", authMiddleware, async (req, res) => {
     const responseStr = await callLLM(systemPrompt, `User Answer: "${answer}"`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN);
     let result = extractJSON(responseStr) || buildFallbackEvaluation(answer, confidence, session.topic);
 
-    let finalDelta = (result.qualityScore * 3);
-    if (confidence === "high" && result.qualityScore < 5) finalDelta -= 30;
-    else if (confidence === "low" && result.qualityScore > 7) finalDelta += 40;
+    const answerLength = answer.trim().length;
+    const lengthBonus = Math.min(8, Math.max(0, Math.floor(answerLength / 40) - 1));
+    const evidenceBonus = /because|therefore|thus|as a result|for example|for instance|such as/i.test(answer) ? 3 : 0;
+    const hedgingPenalty = /maybe|perhaps|might|could be/i.test(answer) ? -3 : 0;
+    const confidenceModifier = confidence === "high" ? -5 : confidence === "low" ? 5 : 0;
 
-    const capacityUsage = (result.qualityScore * 0.8) + (Math.log10(timeTakenSec + 1) * 5);
+    const finalDelta = Math.round((result.qualityScore * 2) + lengthBonus + evidenceBonus + confidenceModifier + hedgingPenalty);
+    const capacityUsage = Math.max(1, result.qualityScore * 0.7 + Math.log10(timeTakenSec + 1) * 4 + lengthBonus * 0.4);
+
     session.frictionScore += finalDelta;
     session.lastActivityAt = new Date();
     session.iterations.push({ userAnswer: answer, confidence, aiCritique: result.critique, frictionScoreDelta: finalDelta });
