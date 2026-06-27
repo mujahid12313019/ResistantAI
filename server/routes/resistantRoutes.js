@@ -2,7 +2,7 @@ const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const Session = require("../models/Session");
 const User = require("../models/User");
-const { buildFallbackEvaluation } = require("../utils/critique");
+const { buildFallbackEvaluation, buildFallbackExplanation } = require("../utils/critique");
 
 const router = express.Router();
 
@@ -94,7 +94,7 @@ router.post("/start", authMiddleware, async (req, res) => {
         if (imgJson?.result?.image) imageData = `data:image/png;base64,${imgJson.result.image}`;
       }
     } catch (e) {}
-    const finalExplanation = (await callLLM("Expert encyclopedia. Clear 2-paragraph explanation.", `Explain ${topic}`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN)) || `A concise explanation for "${topic.trim()}" will appear here once the AI service is reachable.`;
+    const finalExplanation = (await callLLM("Expert encyclopedia. Clear 2-paragraph explanation.", `Explain ${topic}`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN)) || buildFallbackExplanation(topic);
     const session = new Session({ userId: req.user.id, topic: topic.trim(), mode: mode || "Strict Teacher", imageUrl: imageData, finalExplanation });
     await session.save();
     return res.json({ session });
@@ -166,9 +166,9 @@ router.post("/teach", authMiddleware, async (req, res) => {
     `;
     const resultStr = await callLLM(systemPrompt, `User Explanation: ${explanation}`, process.env.CF_ACCOUNT_ID, process.env.CF_API_TOKEN);
     let result = extractJSON(resultStr) || {
-      unlocked: explanation.length > 80,
-      feedback: "The AI service was unavailable, so this was evaluated with a local fallback. Add more detail to improve clarity.",
-      quality: explanation.length > 120 ? 6 : 3,
+      unlocked: explanation.length > 100,
+      feedback: "Local evaluation was used because the AI service could not be reached. To improve your explanation, add a clear definition, step-by-step reasoning, and a concrete example tied to the topic.",
+      quality: Math.min(10, Math.max(2, Math.floor(explanation.length / 25) + 1)),
     };
 
     if (!result.unlocked) {

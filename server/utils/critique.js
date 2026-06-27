@@ -14,6 +14,29 @@ function containsKeyword(text, keywords) {
   return keywords.some((keyword) => normalized.includes(keyword));
 }
 
+function buildFallbackExplanation(topic = "") {
+  const topicText = String(topic || "").trim();
+  const normalizedTopic = normalizeTopic(topicText);
+
+  if (normalizedTopic.includes("generative ai") || normalizedTopic.includes("generative")) {
+    return `Generative AI is a branch of artificial intelligence that learns patterns from data and then creates new content such as text, images, music, or code. Instead of simply classifying information, it can produce original outputs by predicting what should come next based on the patterns it has learned.`;
+  }
+
+  if (normalizedTopic.includes("machine learning")) {
+    return `Machine learning is a way of teaching computers to recognize patterns and make predictions from data instead of following rigid rules. The system improves as it sees more examples, which makes it useful for tasks like classification, forecasting, and recommendation.`;
+  }
+
+  if (normalizedTopic.includes("neural network") || normalizedTopic.includes("neural")) {
+    return `A neural network is a computing model inspired by the brain's layered structure. It processes information through interconnected units that learn to detect patterns, making it effective for tasks such as image recognition, language understanding, and decision support.`;
+  }
+
+  if (normalizedTopic.includes("algorithm")) {
+    return `An algorithm is a step-by-step method for solving a problem or completing a task. Good algorithms turn complex goals into clear instructions that a computer can follow reliably and efficiently.`;
+  }
+
+  return `The concept of ${topicText || "this topic"} can be understood by breaking it into a clear definition, a simple example, and the reason it matters. A concise explanation helps connect the idea to familiar patterns so it becomes easier to remember and use.`;
+}
+
 function buildFallbackEvaluation(answer, confidence = "medium", topic = "") {
   const trimmed = String(answer || "").trim();
   const wordCount = countWords(trimmed);
@@ -70,4 +93,4 @@ function buildFallbackEvaluation(answer, confidence = "medium", topic = "") {
   return { critique, qualityScore: score };
 }
 
-module.exports = { buildFallbackEvaluation }; 
+module.exports = { buildFallbackEvaluation, buildFallbackExplanation }; 

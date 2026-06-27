@@ -103,6 +103,7 @@ export default function ResistantSession() {
   }
 
   const isCompleted = session.status === "completed";
+  const finalExplanation = session.finalExplanation?.trim() || `A concise explanation for "${session.topic}" will appear here once the AI service is reachable.`;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/30 font-sans pb-32">
@@ -162,7 +163,7 @@ export default function ResistantSession() {
               </div>
             </div>
             <div className="text-gray-400 text-lg leading-relaxed space-y-6 font-light">
-              {session.finalExplanation.split('\n\n').map((para, idx) => (
+              {finalExplanation.split('\n\n').map((para, idx) => (
                 <p key={idx}>{para}</p>
               ))}
             </div>
